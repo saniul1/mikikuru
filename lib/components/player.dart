@@ -159,7 +159,7 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
     return InkWell(
       onHover: (hover) {
         setState(() {
-          // isHover = hover;
+          isHover = hover;
         });
       },
       onTap: () {
