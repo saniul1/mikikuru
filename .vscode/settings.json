@@ -2,6 +2,11 @@
     "cSpell.words": [
         "audioplayers",
         "mikikuru",
-        "rxdart"
-    ]
+    ],
+    "dart.lineLength": 100,
+    "[dart]": {
+        "editor.rulers": [
+            100
+        ]
+    }
 }
