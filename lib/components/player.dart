@@ -143,19 +143,30 @@ class PlayerConfigContainer extends StatefulWidget {
 
 class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
   var isHover = false;
+  var isDragging = false;
+
+  Future<void> _maybeCollapse() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (isHover && !isDragging) {
+      setState(() {
+        isHover = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onHover: (hover) {
         setState(() {
-          isHover = hover;
+          // isHover = hover;
         });
       },
       onTap: () {
         setState(() {
           isHover = !isHover;
         });
+        _maybeCollapse();
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -179,23 +190,29 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               width: isHover ? 80 : 0,
-              height: 4,
-              decoration: BoxDecoration(
-                color: widget.colorScheme.primary.withOpacity(0.4),
-                borderRadius: const BorderRadius.all(Radius.circular(10)),
-              ),
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: isHover ? 80 / 2 : 0,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: widget.colorScheme.primary.withOpacity(0.5),
-                      borderRadius: const BorderRadius.all(Radius.circular(10)),
-                    ),
-                  ),
-                ],
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  overlayShape: SliderComponentShape.noOverlay,
+                  trackShape: const RectangularSliderTrackShape(),
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0.0),
+                ),
+                child: Slider(
+                  value: 50,
+                  onChangeStart: (_) {
+                    isDragging = true;
+                  },
+                  onChangeEnd: (_) {
+                    isDragging = false;
+                    _maybeCollapse();
+                  },
+                  onChanged: (value) {
+                    print(value);
+                  },
+                  min: 0.0,
+                  max: 100.0,
+                  activeColor: widget.colorScheme.primary.withOpacity(0.7),
+                  inactiveColor: widget.colorScheme.primary.withOpacity(0.4),
+                ),
               ),
             ),
             if (widget.info != null)
