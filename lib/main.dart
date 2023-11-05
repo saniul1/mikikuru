@@ -1,9 +1,12 @@
+import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mikikuru/states/audio_book_notifier.dart';
 import 'package:mikikuru/states/cover_art_notifier.dart';
 
-import 'audio_book_player.dart';
 import 'components/player.dart';
 import 'models/audio_book_file.dart';
 
@@ -17,19 +20,17 @@ class App extends StatelessWidget {
   const App({super.key});
   @override
   Widget build(BuildContext context) {
-    return AudioBookPlayer(
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        themeMode: ThemeMode.system,
-        theme: ThemeData(
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData.dark(
-          useMaterial3: true,
-        ),
-        debugShowCheckedModeBanner: false,
-        home: const HomePage(),
+    return MaterialApp(
+      title: 'Flutter Demo',
+      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        useMaterial3: true,
       ),
+      darkTheme: ThemeData.dark(
+        useMaterial3: true,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const HomePage(),
     );
   }
 }
@@ -69,11 +70,13 @@ class _HomePageState extends State<HomePage> {
                   [];
               final files = audioFiles..sort((a, b) => a.name.compareTo(b.name));
 
+              print(files.first.path);
+
               setState(() {
                 audioSources = files
                     .map((file) => AudioBookFile(
-                          file: file,
-                          cover: coverFiles.firstOrNull,
+                          file: File(file.path!),
+                          // cover: coverFiles.firstOrNull,
                         ))
                     .toList();
               });
@@ -124,7 +127,7 @@ class _HomePageState extends State<HomePage> {
           const Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
               child: PlayerWidget(),
             ),
           )
@@ -135,7 +138,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    AudioBookPlayer.of(context).clear();
     super.dispose();
   }
 
@@ -192,6 +194,11 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
       },
       onTap: () {
         AudioBookCoverNotifier().value = widget.image;
+        const path = 'intro.mp3';
+        AudioBookNotifier().setSource(AssetSource(path));
+        // AudioBookPlayer.of(context).setPlayerWithFile(audioBookFiles: [
+        //   AudioBookFile(file: file),
+        // ], audioBookFile: AudioBookFile(file: file));
       },
       child: Stack(
         children: [
@@ -228,12 +235,26 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Sit amet do dolore dolor Duis labore nulla reprehenderit anim.',
-                      softWrap: true,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sit amet do dolore dolor Duis labore nulla reprehenderit anim.',
+                          softWrap: true,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(color: Colors.white),
+                        ),
+                        Text(
+                          '- Author',
+                          overflow: TextOverflow.fade,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(

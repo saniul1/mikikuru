@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class AudioBookFile {
-  final PlatformFile file;
-  final PlatformFile? cover;
+  final File file;
+  final File? cover;
 
   AudioBookFile({
     required this.file,

@@ -1,6 +1,10 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:marqueer/marqueer.dart';
+import 'package:mikikuru/states/audio_book_notifier.dart';
+import 'package:mikikuru/states/player_speed_notifier.dart';
+import 'package:mikikuru/states/player_volume_notifier.dart';
 
 import '../states/cover_art_notifier.dart';
 
@@ -80,23 +84,9 @@ class PlayerWidget extends StatelessWidget {
                                           mainAxisAlignment: MainAxisAlignment.start,
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            PlayerTImeInfo(colorScheme: colorScheme),
+                                            PlayerTimeInfo(colorScheme: colorScheme),
                                             const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                PlayerConfigContainer(
-                                                  colorScheme: colorScheme,
-                                                  icon: CupertinoIcons.speaker_2,
-                                                  info: ' 50',
-                                                ),
-                                                const SizedBox(width: 8.0),
-                                                PlayerConfigContainer(
-                                                  colorScheme: colorScheme,
-                                                  icon: CupertinoIcons.speedometer,
-                                                  info: '2.0',
-                                                ),
-                                              ],
-                                            ),
+                                            PlayerConfigControl(colorScheme: colorScheme),
                                           ],
                                         ),
                                       ),
@@ -125,17 +115,117 @@ class PlayerWidget extends StatelessWidget {
   }
 }
 
+class PlayerConfigControl extends StatefulWidget {
+  const PlayerConfigControl({
+    super.key,
+    required this.colorScheme,
+  });
+
+  final ColorScheme colorScheme;
+
+  @override
+  State<PlayerConfigControl> createState() => _PlayerConfigControlState();
+}
+
+class _PlayerConfigControlState extends State<PlayerConfigControl> {
+  double volumeStore = 0;
+  ScrollController controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      controller: controller,
+      child: Row(
+        children: [
+          ValueListenableBuilder(
+            valueListenable: PlayerVolumeNotifier(),
+            builder: (context, value, _) {
+              return PlayerConfigContainer(
+                colorScheme: widget.colorScheme,
+                icon: AudioBookNotifier().player.volume == 0
+                    ? CupertinoIcons.speaker_slash
+                    : AudioBookNotifier().player.volume >= 0.5
+                        ? CupertinoIcons.speaker_2
+                        : CupertinoIcons.speaker_1,
+                info: '${value < 1 ? ' ' : ''}${(100 * value).toInt()}',
+                value: value,
+                max: 1,
+                onIconTap: () {
+                  if (AudioBookNotifier().player.volume != 0) {
+                    volumeStore = PlayerVolumeNotifier().value;
+                    PlayerVolumeNotifier().set(0);
+                  } else {
+                    PlayerVolumeNotifier().set(volumeStore);
+                  }
+                },
+                onChanged: (value) {
+                  PlayerVolumeNotifier().set(value);
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8.0),
+          ValueListenableBuilder(
+            valueListenable: PlayerSpeedNotifier(),
+            builder: (context, value, _) {
+              return PlayerConfigContainer(
+                colorScheme: widget.colorScheme,
+                icon: CupertinoIcons.speedometer,
+                info: value.toStringAsFixed(1),
+                value: value,
+                min: 0.5,
+                max: 2,
+                onIconTap: () {
+                  PlayerSpeedNotifier().set(1);
+                },
+                onChanged: (value) {
+                  PlayerSpeedNotifier().set(value);
+                },
+                onExpand: () async {
+                  // controller.animateTo(
+                  //   10,
+                  //   duration: const Duration(milliseconds: 300),
+                  //   curve: Curves.bounceIn,
+                  // );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PlayerConfigContainer extends StatefulWidget {
   const PlayerConfigContainer({
     super.key,
     required this.colorScheme,
     required this.icon,
+    required this.value,
+    this.min = 0,
+    required this.max,
+    required this.onChanged,
+    this.onIconTap,
+    this.onExpand,
     this.info,
   });
 
   final ColorScheme colorScheme;
   final IconData icon;
   final String? info;
+  final double value;
+  final double min;
+  final double max;
+  final void Function(double value) onChanged;
+  final void Function()? onIconTap;
+  final void Function()? onExpand;
 
   @override
   State<PlayerConfigContainer> createState() => _PlayerConfigContainerState();
@@ -175,15 +265,21 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
           borderRadius: const BorderRadius.all(Radius.circular(10)),
           color: widget.colorScheme.background.withOpacity(0.7),
         ),
+        onEnd: () {
+          if (isHover && widget.onExpand != null) widget.onExpand!();
+        },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 4.0, top: 2, right: 2, bottom: 2),
-              child: Icon(
-                widget.icon,
-                size: 18,
-                color: widget.colorScheme.primary,
+              child: GestureDetector(
+                onTap: widget.onIconTap,
+                child: Icon(
+                  widget.icon,
+                  size: 18,
+                  color: widget.colorScheme.primary,
+                ),
               ),
             ),
             // if (isHover)
@@ -197,7 +293,7 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0.0),
                 ),
                 child: Slider(
-                  value: 50,
+                  value: widget.value,
                   onChangeStart: (_) {
                     isDragging = true;
                   },
@@ -205,11 +301,9 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
                     isDragging = false;
                     _maybeCollapse();
                   },
-                  onChanged: (value) {
-                    print(value);
-                  },
-                  min: 0.0,
-                  max: 100.0,
+                  onChanged: widget.onChanged,
+                  min: widget.min,
+                  max: widget.max,
                   activeColor: widget.colorScheme.primary.withOpacity(0.7),
                   inactiveColor: widget.colorScheme.primary.withOpacity(0.4),
                 ),
@@ -270,19 +364,47 @@ class PlayerControl extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            AudioBookNotifier().playOrPause();
+          },
           color: colorScheme.primary,
-          icon: const Icon(
-            false ? CupertinoIcons.play_fill : CupertinoIcons.pause_fill,
-          ),
+          icon: const _PlayPauseIcon(),
         ),
       ],
     );
   }
 }
 
-class PlayerTImeInfo extends StatelessWidget {
-  const PlayerTImeInfo({
+class _PlayPauseIcon extends StatefulWidget {
+  const _PlayPauseIcon();
+
+  @override
+  State<_PlayPauseIcon> createState() => _PlayPauseIconState();
+}
+
+class _PlayPauseIconState extends State<_PlayPauseIcon> {
+  PlayerState state = PlayerState.stopped;
+
+  @override
+  void initState() {
+    super.initState();
+    AudioBookNotifier().player.onPlayerStateChanged.listen((PlayerState value) {
+      setState(() {
+        state = value;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      state != PlayerState.playing ? CupertinoIcons.play_fill : CupertinoIcons.pause_fill,
+    );
+  }
+}
+
+class PlayerTimeInfo extends StatelessWidget {
+  const PlayerTimeInfo({
     super.key,
     required this.colorScheme,
   });
