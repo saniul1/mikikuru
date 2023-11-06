@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:mikikuru/states/audio_book_notifier.dart';
+import 'package:mikikuru/states/player_notifier.dart';
 
 class PlayerSpeedNotifier extends ValueNotifier<double> {
   static final PlayerSpeedNotifier _shared = PlayerSpeedNotifier._sharedInstance();
@@ -9,6 +9,6 @@ class PlayerSpeedNotifier extends ValueNotifier<double> {
   /// between 0-2
   void set(double volume) {
     value = volume;
-    AudioBookNotifier().setPlaySpeed(volume);
+    PlayerNotifier().setPlaySpeed(volume);
   }
 }

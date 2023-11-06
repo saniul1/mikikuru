@@ -2,10 +2,10 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:mikikuru/states/player_volume_notifier.dart';
 
-class AudioBookNotifier extends ChangeNotifier {
-  static final AudioBookNotifier _shared = AudioBookNotifier._sharedInstance();
-  factory AudioBookNotifier() => _shared;
-  AudioBookNotifier._sharedInstance()
+class PlayerNotifier extends ChangeNotifier {
+  static final PlayerNotifier _shared = PlayerNotifier._sharedInstance();
+  factory PlayerNotifier() => _shared;
+  PlayerNotifier._sharedInstance()
       : player = AudioPlayer(),
         super();
   late final AudioPlayer player;
@@ -38,18 +38,4 @@ class AudioBookNotifier extends ChangeNotifier {
     player.setPlaybackRate(rate);
     notifyListeners();
   }
-}
-
-class AudioBookNotifierWidget extends InheritedNotifier<AudioBookNotifier> {
-  const AudioBookNotifierWidget({
-    super.key,
-    required super.notifier,
-    required super.child,
-  });
-
-  static AudioBookNotifier of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AudioBookNotifierWidget>()!.notifier!;
-
-  static AudioPlayer playerOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AudioBookNotifierWidget>()!.notifier!.player;
 }

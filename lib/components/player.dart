@@ -2,7 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:marqueer/marqueer.dart';
-import 'package:mikikuru/states/audio_book_notifier.dart';
+import 'package:mikikuru/states/player_notifier.dart';
 import 'package:mikikuru/states/player_speed_notifier.dart';
 import 'package:mikikuru/states/player_volume_notifier.dart';
 
@@ -148,16 +148,16 @@ class _PlayerConfigControlState extends State<PlayerConfigControl> {
             builder: (context, value, _) {
               return PlayerConfigContainer(
                 colorScheme: widget.colorScheme,
-                icon: AudioBookNotifier().player.volume == 0
+                icon: PlayerNotifier().player.volume == 0
                     ? CupertinoIcons.speaker_slash
-                    : AudioBookNotifier().player.volume >= 0.5
+                    : PlayerNotifier().player.volume >= 0.5
                         ? CupertinoIcons.speaker_2
                         : CupertinoIcons.speaker_1,
                 info: '${value < 1 ? ' ' : ''}${(100 * value).toInt()}',
                 value: value,
                 max: 1,
                 onIconTap: () {
-                  if (AudioBookNotifier().player.volume != 0) {
+                  if (PlayerNotifier().player.volume != 0) {
                     volumeStore = PlayerVolumeNotifier().value;
                     PlayerVolumeNotifier().set(0);
                   } else {
@@ -326,7 +326,7 @@ class _PlayerConfigContainerState extends State<PlayerConfigContainer> {
   }
 }
 
-class PlayerProgressBar extends StatelessWidget {
+class PlayerProgressBar extends StatefulWidget {
   const PlayerProgressBar({
     super.key,
     required this.colorScheme,
@@ -335,11 +335,46 @@ class PlayerProgressBar extends StatelessWidget {
   final ColorScheme colorScheme;
 
   @override
+  State<PlayerProgressBar> createState() => _PlayerProgressBarState();
+}
+
+class _PlayerProgressBarState extends State<PlayerProgressBar> {
+  Duration runTime = Duration.zero;
+  double progress = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    PlayerNotifier().player.onDurationChanged.listen((Duration d) {
+      setState(() => runTime = d);
+    });
+    PlayerNotifier().player.onPositionChanged.listen((Duration p) {
+      setState(() {
+        progress = (p.inMilliseconds / runTime.inMilliseconds) * 100;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return SizedBox(
       height: 4,
-      color: colorScheme.primary,
+      child: SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 4.0,
+          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0.0),
+          overlayShape: SliderComponentShape.noOverlay,
+          trackShape: const RectangularSliderTrackShape(),
+          activeTrackColor: widget.colorScheme.onPrimary,
+          inactiveTrackColor: widget.colorScheme.primary,
+        ),
+        child: Slider(
+          value: progress,
+          min: 0,
+          max: 100,
+          onChanged: (double value) {},
+        ),
+      ),
     );
   }
 }
@@ -365,7 +400,7 @@ class PlayerControl extends StatelessWidget {
         ),
         IconButton(
           onPressed: () {
-            AudioBookNotifier().playOrPause();
+            PlayerNotifier().playOrPause();
           },
           color: colorScheme.primary,
           icon: const _PlayPauseIcon(),
@@ -388,7 +423,7 @@ class _PlayPauseIconState extends State<_PlayPauseIcon> {
   @override
   void initState() {
     super.initState();
-    AudioBookNotifier().player.onPlayerStateChanged.listen((PlayerState value) {
+    PlayerNotifier().player.onPlayerStateChanged.listen((PlayerState value) {
       setState(() {
         state = value;
       });
@@ -403,7 +438,13 @@ class _PlayPauseIconState extends State<_PlayPauseIcon> {
   }
 }
 
-class PlayerTimeInfo extends StatelessWidget {
+extension DurationExtension on Duration {
+  String toTimeString() {
+    return toString().split('.').firstOrNull ?? '';
+  }
+}
+
+class PlayerTimeInfo extends StatefulWidget {
   const PlayerTimeInfo({
     super.key,
     required this.colorScheme,
@@ -412,12 +453,31 @@ class PlayerTimeInfo extends StatelessWidget {
   final ColorScheme colorScheme;
 
   @override
+  State<PlayerTimeInfo> createState() => _PlayerTimeInfoState();
+}
+
+class _PlayerTimeInfoState extends State<PlayerTimeInfo> {
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    PlayerNotifier().player.onDurationChanged.listen((Duration d) {
+      setState(() => duration = d);
+    });
+    PlayerNotifier().player.onPositionChanged.listen((Duration p) {
+      setState(() => position = p);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Text(
-      '22:02 / 01:59:00 (7:20:02)',
+      '${position.toTimeString()} / ${duration.toTimeString()}',
       softWrap: false,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: colorScheme.onPrimaryContainer,
+            color: widget.colorScheme.onPrimaryContainer,
           ),
     );
   }

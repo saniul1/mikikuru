@@ -4,8 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mikikuru/states/audio_book_notifier.dart';
 import 'package:mikikuru/states/cover_art_notifier.dart';
+import 'package:mikikuru/states/player_notifier.dart';
 
 import 'components/player.dart';
 import 'models/audio_book_file.dart';
@@ -43,6 +43,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    PlayerNotifier().player.dispose();
+    super.dispose();
+  }
+
   List<AudioBookFile> audioSources = [];
   @override
   Widget build(BuildContext context) {
@@ -135,16 +146,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
 }
 
 class BookCover extends StatefulWidget {
@@ -195,7 +196,7 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
       onTap: () {
         AudioBookCoverNotifier().value = widget.image;
         const path = 'intro.mp3';
-        AudioBookNotifier().setSource(AssetSource(path));
+        PlayerNotifier().setSource(AssetSource(path));
         // AudioBookPlayer.of(context).setPlayerWithFile(audioBookFiles: [
         //   AudioBookFile(file: file),
         // ], audioBookFile: AudioBookFile(file: file));
