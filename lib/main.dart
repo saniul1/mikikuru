@@ -183,7 +183,6 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       duration: const Duration(milliseconds: 100),
       vsync: this,
@@ -197,20 +196,35 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
     );
   }
 
+  void _hover(bool hover) {
+    hover ? _controller.forward() : _controller.reverse();
+    setState(() {
+      isHover = hover;
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onHover: (hover) {
-        hover ? _controller.forward() : _controller.reverse();
-        setState(() {
-          isHover = hover;
-        });
+        _hover(hover);
       },
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           getDetailViewRoute('cover-${widget.i}', widget.image),
         );
+        // need to check hover after pop
+        if (isHover) {
+          _hover(false);
+        }
+
         // AudioBookCoverNotifier().value = widget.image;
         // const path = 'intro.mp3';
         // PlayerNotifier().setSource(AssetSource(path));
@@ -218,119 +232,123 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
         //   AudioBookFile(file: file),
         // ], audioBookFile: AudioBookFile(file: file));
       },
-      child: Stack(
-        children: [
-          Hero(
-            tag: 'cover-${widget.i}',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AnimatedBuilder(
-                animation: _animation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _animation.value,
-                    child: Image(
-                      image: widget.image,
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          if (isHover)
-            Container(
-              decoration: BoxDecoration(
+      child: GestureDetector(
+        onLongPressDown: (_) {
+          _hover(true);
+        },
+        onLongPressUp: () {
+          _hover(false);
+        },
+        child: Stack(
+          children: [
+            Hero(
+              tag: 'cover-${widget.i}',
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    spreadRadius: 1,
-                    blurRadius: 1,
-                    offset: const Offset(0, 0), // changes position of shadow
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sit amet do dolore dolor Duis labore nulla reprehenderit anim.',
-                          softWrap: true,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                        Text(
-                          '- Author',
-                          overflow: TextOverflow.fade,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '03:44:32',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white30,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  widget.i != 3
-                                      ? CupertinoIcons.play_arrow_solid
-                                      : CupertinoIcons.pause_solid,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.i == 3
-                                      ? 'Playing'
-                                      : [0, 2, 8, 9].contains(widget.i)
-                                          ? 'Continue'
-                                          : 'Play Now',
-                                  style: Theme.of(context).textTheme.labelMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                ],
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _animation.value,
+                      child: Image(
+                        image: widget.image,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-        ],
+            if (isHover)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 0), // changes position of shadow
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sit amet do dolore dolor Duis labore nulla reprehenderit anim.',
+                            softWrap: true,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: Colors.white),
+                          ),
+                          Text(
+                            '- Author',
+                            overflow: TextOverflow.fade,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '03:44:32',
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white30,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    widget.i != 3
+                                        ? CupertinoIcons.play_arrow_solid
+                                        : CupertinoIcons.pause_solid,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.i == 3
+                                        ? 'Playing'
+                                        : [0, 2, 8, 9].contains(widget.i)
+                                            ? 'Continue'
+                                            : 'Play Now',
+                                    style: Theme.of(context).textTheme.labelMedium,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
