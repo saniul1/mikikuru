@@ -5,6 +5,7 @@ import 'package:marqueer/marqueer.dart';
 import 'package:mikikuru/states/player_notifier.dart';
 import 'package:mikikuru/states/player_speed_notifier.dart';
 import 'package:mikikuru/states/player_volume_notifier.dart';
+import 'package:mikikuru/utils/routes.dart';
 
 import '../states/cover_art_notifier.dart';
 
@@ -20,95 +21,106 @@ class PlayerWidget extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: AudioBookCoverNotifier(),
       builder: (context, cover, _) {
-        return FutureBuilder(
-          future: ColorScheme.fromImageProvider(provider: cover),
-          builder: (context, snap) {
-            if (snap.data == null) return const SizedBox();
-            final colorScheme = snap.data!;
-            return Container(
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primaryContainer.withOpacity(0.5),
-                    blurRadius: 50,
-                    spreadRadius: 4,
-                    offset: const Offset(0, -8),
-                  ),
-                  BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.5),
-                    blurRadius: 50,
-                    spreadRadius: 4,
-                    offset: const Offset(0, 76),
-                  ),
-                ],
-              ),
-              constraints: const BoxConstraints(
-                maxWidth: 360,
-                maxHeight: height,
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
-                children: [
-                  Column(
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image(
-                            image: cover,
-                            height: height,
-                            fit: BoxFit.cover,
-                          ),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
-                                  child: SizedBox(
-                                    height: 16,
-                                    child: PlayerTitle(colorScheme: colorScheme),
-                                  ),
-                                ),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            PlayerTimeInfo(colorScheme: colorScheme),
-                                            const SizedBox(height: 4),
-                                            PlayerConfigControl(colorScheme: colorScheme),
-                                          ],
-                                        ),
-                                      ),
-                                      PlayerControl(colorScheme: colorScheme),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: PlayerProgressBar(colorScheme: colorScheme),
-                  ),
-                ],
-              ),
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              getDetailViewRoute('player-cover', cover),
             );
           },
+          child: FutureBuilder(
+            future: ColorScheme.fromImageProvider(provider: cover),
+            builder: (context, snap) {
+              if (snap.data == null) return const SizedBox();
+              final colorScheme = snap.data!;
+              return Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primaryContainer.withOpacity(0.5),
+                      blurRadius: 50,
+                      spreadRadius: 4,
+                      offset: const Offset(0, -8),
+                    ),
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.5),
+                      blurRadius: 50,
+                      spreadRadius: 4,
+                      offset: const Offset(0, 76),
+                    ),
+                  ],
+                ),
+                constraints: const BoxConstraints(
+                  maxWidth: 360,
+                  maxHeight: height,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Hero(
+                              tag: 'player-cover',
+                              child: Image(
+                                image: cover,
+                                height: height,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+                                    child: SizedBox(
+                                      height: 16,
+                                      child: PlayerTitle(colorScheme: colorScheme),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              PlayerTimeInfo(colorScheme: colorScheme),
+                                              const SizedBox(height: 4),
+                                              PlayerConfigControl(colorScheme: colorScheme),
+                                            ],
+                                          ),
+                                        ),
+                                        PlayerControl(colorScheme: colorScheme),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: PlayerProgressBar(colorScheme: colorScheme),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );

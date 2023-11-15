@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mikikuru/states/cover_art_notifier.dart';
 import 'package:mikikuru/states/player_notifier.dart';
+import 'package:mikikuru/utils/routes.dart';
 
 import 'components/player.dart';
 import 'models/audio_book_file.dart';
@@ -31,6 +30,20 @@ class App extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const HomePage(),
+    );
+  }
+}
+
+class MainScreen extends StatelessWidget {
+  const MainScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Main Screen'),
+      ),
+      body: const HomePage(),
     );
   }
 }
@@ -194,28 +207,35 @@ class _BookCoverState extends State<BookCover> with SingleTickerProviderStateMix
         });
       },
       onTap: () {
-        AudioBookCoverNotifier().value = widget.image;
-        const path = 'intro.mp3';
-        PlayerNotifier().setSource(AssetSource(path));
+        Navigator.push(
+          context,
+          getDetailViewRoute('cover-${widget.i}', widget.image),
+        );
+        // AudioBookCoverNotifier().value = widget.image;
+        // const path = 'intro.mp3';
+        // PlayerNotifier().setSource(AssetSource(path));
         // AudioBookPlayer.of(context).setPlayerWithFile(audioBookFiles: [
         //   AudioBookFile(file: file),
         // ], audioBookFile: AudioBookFile(file: file));
       },
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: AnimatedBuilder(
-              animation: _animation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _animation.value,
-                  child: Image(
-                    image: widget.image,
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
+          Hero(
+            tag: 'cover-${widget.i}',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _animation.value,
+                    child: Image(
+                      image: widget.image,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           if (isHover)
